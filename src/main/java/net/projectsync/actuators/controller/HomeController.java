@@ -1,4 +1,4 @@
-package net.projectsync.actuators;
+package net.projectsync.actuators.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
