@@ -70,3 +70,251 @@ public class DatabaseService {
 3. @PreDestroy - Closing database connection
    Database connection closed
 */
+
+
+
+
+
+
+
+
+
+
+
+/* 
+ * I can initialize in constructor itself. then why do i need @PostConstruct?
+ */
+/*
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import javax.annotation.PostConstruct;
+
+// Example 1: Dependency Injection Issue
+@Service
+public class UserService {
+    
+    @Autowired
+    private EmailService emailService; // This is NULL in constructor!
+    
+    @Autowired
+    private DatabaseService databaseService; // This is also NULL in constructor!
+    
+    public UserService() {
+        System.out.println("Constructor: emailService = " + emailService); // NULL!
+        System.out.println("Constructor: databaseService = " + databaseService); // NULL!
+        
+        // This will throw NullPointerException!
+        // emailService.sendWelcomeEmail(); // DON'T DO THIS!
+    }
+    
+    @PostConstruct
+    public void init() {
+        System.out.println("PostConstruct: emailService = " + emailService); // NOT NULL!
+        System.out.println("PostConstruct: databaseService = " + databaseService); // NOT NULL!
+        
+        // Now it's safe to use injected dependencies
+        emailService.sendWelcomeEmail("System started!");
+        databaseService.performDatabaseOperation();
+    }
+}
+
+// Example 2: Proxy and AOP Issues
+@Service
+public class SecurityService {
+    
+    private boolean initialized = false;
+    
+    public SecurityService() {
+        // This method call might not go through Spring proxies!
+        loadSecurityConfig(); // Might not trigger @Transactional, @Cacheable, etc.
+    }
+    
+    @PostConstruct 
+    public void init() {
+        // This method call goes through Spring proxies
+        loadSecurityConfig(); // Will properly trigger @Transactional, @Cacheable, etc.
+    }
+    
+    @Transactional
+    @Cacheable("security-config")
+    public void loadSecurityConfig() {
+        System.out.println("Loading security configuration...");
+        // Database operations that need transaction
+        initialized = true;
+    }
+}
+
+// Example 3: Exception Handling
+@Service
+public class FileService {
+    
+    private String configPath;
+    
+    public FileService() {
+        try {
+            // If this fails, Spring won't know about it properly
+            loadConfiguration();
+            System.out.println("Constructor initialization successful");
+        } catch (Exception e) {
+            System.out.println("Constructor failed: " + e.getMessage());
+            // Spring might still create the bean in an invalid state!
+        }
+    }
+    
+    @PostConstruct
+    public void init() {
+        try {
+            loadConfiguration();
+            System.out.println("PostConstruct initialization successful");
+        } catch (Exception e) {
+            System.out.println("PostConstruct failed: " + e.getMessage());
+            // Spring handles this better and can prevent bean creation
+            throw e;
+        }
+    }
+    
+    private void loadConfiguration() throws Exception {
+        // Simulate configuration loading that might fail
+        configPath = "/app/config.properties";
+        if (Math.random() > 0.5) {
+            throw new RuntimeException("Configuration file not found");
+        }
+    }
+}
+
+// Example 4: Circular Dependencies
+@Service
+public class OrderService {
+    
+    @Autowired
+    private PaymentService paymentService;
+    
+    private boolean ready = false;
+    
+    public OrderService() {
+        // Can't use paymentService here - might cause circular dependency issues
+        System.out.println("OrderService constructor - paymentService = " + paymentService);
+    }
+    
+    @PostConstruct
+    public void init() {
+        // Safe to use here - Spring has resolved circular dependencies
+        System.out.println("OrderService init - paymentService = " + paymentService);
+        paymentService.validateConfiguration();
+        ready = true;
+    }
+    
+    public void processOrder() {
+        if (!ready) {
+            throw new IllegalStateException("Service not ready");
+        }
+        paymentService.processPayment();
+    }
+}
+
+@Service
+public class PaymentService {
+    
+    @Autowired
+    private OrderService orderService; // Circular dependency
+    
+    public PaymentService() {
+        System.out.println("PaymentService constructor");
+    }
+    
+    @PostConstruct
+    public void init() {
+        System.out.println("PaymentService init");
+    }
+    
+    public void validateConfiguration() {
+        System.out.println("Payment configuration validated");
+    }
+    
+    public void processPayment() {
+        System.out.println("Processing payment...");
+    }
+}
+
+// Supporting services
+@Service
+public class EmailService {
+    
+    public void sendWelcomeEmail(String message) {
+        System.out.println("Sending email: " + message);
+    }
+}
+
+@Service
+public class DatabaseService {
+    
+    public void performDatabaseOperation() {
+        System.out.println("Performing database operation");
+    }
+}
+
+// Main Application
+@SpringBootApplication
+public class DemoApplication {
+    
+    public static void main(String[] args) {
+        System.out.println("=== Spring Boot Lifecycle Demo ===\n");
+        
+        ApplicationContext context = SpringApplication.run(DemoApplication.class, args);
+        
+        System.out.println("\n=== Using the services ===");
+        UserService userService = context.getBean(UserService.class);
+        OrderService orderService = context.getBean(OrderService.class);
+        
+        orderService.processOrder();
+    }
+}
+*/
+
+
+
+
+
+/*
+When to Use Each?
+ - Use Constructor for:
+	-- Simple field initialization
+	-- Setting final fields
+	-- Basic validation that doesn't need dependencies
+
+ - Use @PostConstruct for:
+	-- Initialization that needs injected dependencies
+	-- Database connections, external service calls
+	-- Complex initialization logic
+	-- Anything that might throw exceptions
+	-- Loading configuration or cached data
+	-- Starting background processes
+
+
+// Real-World Example:
+@Service
+public class CacheService {
+    
+    @Autowired
+    private RedisTemplate redisTemplate; // NULL in constructor
+    
+    @Value("${cache.expiry.minutes}")
+    private int expiryMinutes; // NULL in constructor
+    
+    private final Map<String, Object> localCache; // Can initialize in constructor
+    
+    public CacheService() {
+        // Only initialize things that don't need Spring dependencies
+        localCache = new ConcurrentHashMap<>();
+        System.out.println("Cache service created");
+    }
+    
+    @PostConstruct
+    public void setupCache() {
+        // Now we can safely use injected dependencies
+        redisTemplate.getConnectionFactory().getConnection().ping();
+        System.out.println("Redis connection verified");
+        System.out.println("Cache expiry set to: " + expiryMinutes + " minutes");
+    }
+}
+*/
