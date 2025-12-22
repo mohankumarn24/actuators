@@ -7,7 +7,7 @@ import javax.annotation.PreDestroy;
 @Service
 public class DatabaseService {
 
-    private boolean connectionOpen = false;
+    private boolean isConnectionOpen = false;
 
     public DatabaseService() {
         System.out.println("1 - DatabaseService constructor");
@@ -17,12 +17,12 @@ public class DatabaseService {
     public void openConnection() {
         System.out.println("2 - @PostConstruct - Opening database connection");
         // Simulate opening a database connection
-        connectionOpen = true;
+        isConnectionOpen = true;
         System.out.println("    Database connection established");
     }
 
     public void performDatabaseOperation() {
-        if (!connectionOpen) {
+        if (!isConnectionOpen) {
             throw new IllegalStateException("Database connection not available");
         }
         System.out.println("Performing database operation...");
@@ -33,7 +33,7 @@ public class DatabaseService {
     public void closeConnection() {
         System.out.println("3. @PreDestroy - Closing database connection");
         // Simulate closing the database connection
-        connectionOpen = false;
+        isConnectionOpen = false;
         System.out.println("    Database connection closed");
     }
 }
